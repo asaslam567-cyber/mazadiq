@@ -256,6 +256,25 @@
   const emailStatus = document.getElementById("bid-email-status");
   const BIDDER_KEY = "alfadhli_bidder";
   let lockedScrollY = 0;
+  let successCloseTimer = 0;
+
+  function clearSuccessCloseTimer() {
+    if (successCloseTimer) {
+      clearTimeout(successCloseTimer);
+      successCloseTimer = 0;
+    }
+  }
+
+  function closeBidModal() {
+    clearSuccessCloseTimer();
+    if (emailStatus) {
+      emailStatus.hidden = true;
+      emailStatus.textContent = "";
+      emailStatus.className = "flash";
+    }
+    if (modal) modal.classList.remove("open");
+    unlockPageForModal();
+  }
 
   function lockPageForModal() {
     lockedScrollY = window.scrollY || window.pageYOffset || 0;
@@ -284,6 +303,7 @@
     amount.setAttribute("data-increment", inc);
     amount.setAttribute("data-current", current);
     amount.dataset.touched = "";
+    clearSuccessCloseTimer();
     if (errorBox) errorBox.hidden = true;
     if (emailStatus) {
       emailStatus.hidden = true;
@@ -375,8 +395,7 @@
 
   document.addEventListener("keydown", function (e) {
     if (e.key === "Escape" && modal && modal.classList.contains("open")) {
-      modal.classList.remove("open");
-      unlockPageForModal();
+      closeBidModal();
     }
   });
 
@@ -492,6 +511,8 @@
         applyLeaderBanner(document.querySelector("[data-leader-banner]"), data);
         const watchId = (amount.getAttribute("data-watch") || "").trim();
         if (data.auction_ends_at) applyAuctionEnd(watchId, data.auction_ends_at);
+        clearSuccessCloseTimer();
+        successCloseTimer = setTimeout(closeBidModal, 1500);
       } catch (err) {
         if (errorBox) {
           errorBox.hidden = false;
@@ -506,10 +527,7 @@
 
   document.querySelectorAll("[data-close-modal]").forEach(function (el) {
     el.addEventListener("click", function () {
-      if (modal) {
-        modal.classList.remove("open");
-        unlockPageForModal();
-      }
+      closeBidModal();
     });
   });
 
