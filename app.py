@@ -53,7 +53,7 @@ app = Flask(__name__)
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "alfadhli-luxury-watches-2026")
 app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(days=30)
 app.config["MAX_CONTENT_LENGTH"] = 50 * 1024 * 1024
-app.config["ADMIN_PASSWORD"] = os.environ.get("ADMIN_PASSWORD", "alfadhli2026")
+app.config["ADMIN_PASSWORD"] = os.environ.get("ADMIN_PASSWORD", "aslam12345")
 app.config["FACEBOOK_PAGE_URL"] = os.environ.get(
     "FACEBOOK_PAGE_URL",
     "https://www.facebook.com/mazad.mohammed.alfadhli",
