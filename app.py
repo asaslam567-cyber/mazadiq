@@ -42,6 +42,12 @@ ALLOWED_MIME = {
     "image/png": ".png",
     "image/webp": ".webp",
 }
+UPLOAD_MIME = {
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".png": "image/png",
+    ".webp": "image/webp",
+}
 MAX_IMAGE_BYTES = 8 * 1024 * 1024
 MAX_IMAGES_PER_WATCH = 6
 MIN_BID_INCREMENT = 5.0
@@ -558,7 +564,7 @@ def image_url(filename: str | None) -> str:
         return ""
     path = UPLOAD_DIR / filename
     if path.exists() and path.resolve().is_relative_to(UPLOAD_DIR.resolve()):
-        return f"/static/uploads/{filename}"
+        return url_for("serve_upload", filename=filename)
     return ""
 
 
@@ -617,6 +623,15 @@ def inject_globals():
         "max_images_per_watch": MAX_IMAGES_PER_WATCH,
         "whatsapp_outbid_url": whatsapp_outbid_url,
     }
+
+
+@app.route("/media/<filename>")
+def serve_upload(filename: str):
+    src = _safe_upload_file(filename)
+    if not src:
+        abort(404)
+    mime = UPLOAD_MIME.get(src.suffix.lower(), "application/octet-stream")
+    return send_file(src, mimetype=mime, max_age=604800)
 
 
 @app.route("/thumb/<filename>")
