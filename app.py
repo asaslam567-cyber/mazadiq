@@ -8,6 +8,7 @@ import json
 import os
 import re
 import sqlite3
+import sys
 import threading
 import uuid
 import urllib.error
@@ -73,6 +74,13 @@ app.config["PREFERRED_URL_SCHEME"] = "https" if os.environ.get("RENDER") else "h
 _db_lock = threading.Lock()
 
 
+def _bid_email_trace(message: str) -> None:
+    line = f"[bid-email] {message}"
+    print(line, flush=True)
+    sys.stdout.flush()
+    app.logger.info(line)
+
+
 def _resend_api_key() -> str:
     raw = (os.environ.get("RESEND_API_KEY") or os.environ.get("RESEND_APIKEY") or "").strip()
     return raw.strip('"').strip("'")
@@ -80,7 +88,11 @@ def _resend_api_key() -> str:
 
 def _send_admin_bid_email(bidder_name: str, watch_name: str) -> str:
     api_key = _resend_api_key()
+    _bid_email_trace(
+        f"send start from=onboarding@resend.dev to=as.aslam567@gmail.com key_set={bool(api_key)} key_len={len(api_key)}"
+    )
     if not api_key:
+        _bid_email_trace("skip: RESEND_API_KEY is missing")
         app.logger.warning("Bid email skipped: RESEND_API_KEY is not set")
         return "لم يُعثر على المفتاح. اسم المتغير يجب أن يكون RESEND_API_KEY تماماً."
     text = f"قام {bidder_name} بالمزايدة على ساعة {watch_name}."
@@ -104,10 +116,12 @@ def _send_admin_bid_email(bidder_name: str, watch_name: str) -> str:
     )
     try:
         with urllib.request.urlopen(req, timeout=8) as resp:
-            resp.read()
+            body = resp.read().decode("utf-8", errors="replace")
+            _bid_email_trace(f"resend ok status={resp.status} body={body}")
         return ""
     except urllib.error.HTTPError as err:
         detail = err.read().decode("utf-8", errors="replace")
+        _bid_email_trace(f"resend HTTPError status={err.code} body={detail}")
         app.logger.error("Bid email failed: %s %s", err.code, detail)
         try:
             message = json.loads(detail).get("message") or detail
@@ -115,6 +129,7 @@ def _send_admin_bid_email(bidder_name: str, watch_name: str) -> str:
             message = detail or str(err.code)
         return str(message)
     except (urllib.error.URLError, TimeoutError, OSError) as err:
+        _bid_email_trace(f"resend network error type={type(err).__name__} err={err}")
         app.logger.exception("Bid email failed")
         return str(err)
 
@@ -954,14 +969,24 @@ def place_bid(watch_id: int):
             )
             db.execute("COMMIT")
             watch_name = row["name_ar"] or ""
+            _bid_email_trace(
+                f"bid committed watch_id={watch_id} bidder={full_name!r} watch={watch_name!r}"
+            )
         except Exception:
             db.execute("ROLLBACK")
             raise
 
-    if watch_name is not None:
+    if watch_name is None:
+        _bid_email_trace(f"skip send: bid did not commit watch_id={watch_id}")
+    else:
         try:
-            _send_admin_bid_email(full_name, watch_name)
-        except Exception:
+            send_error = _send_admin_bid_email(full_name, watch_name)
+            if send_error:
+                _bid_email_trace(f"send returned error={send_error!r}")
+            else:
+                _bid_email_trace("send returned success")
+        except Exception as err:
+            _bid_email_trace(f"send raised {type(err).__name__}: {err}")
             app.logger.exception("Bid email failed")
 
     session.permanent = True
