@@ -6,9 +6,12 @@ from __future__ import annotations
 import hashlib
 import os
 import re
+import smtplib
 import sqlite3
+import ssl
 import threading
 import uuid
+from email.message import EmailMessage
 from datetime import datetime, timedelta, timezone
 from functools import wraps
 from pathlib import Path
@@ -66,8 +69,45 @@ app.config["FACEBOOK_PAGE_URL"] = os.environ.get(
 )
 app.config["PUBLIC_SITE_URL"] = os.environ.get("PUBLIC_SITE_URL", "").rstrip("/")
 app.config["PREFERRED_URL_SCHEME"] = "https" if os.environ.get("RENDER") else "http"
+ADMIN_BID_EMAIL = (os.environ.get("ADMIN_BID_EMAIL") or "as.aslam567@gmail.com").strip()
 
 _db_lock = threading.Lock()
+
+
+def schedule_admin_bid_email(bidder_name: str, watch_name: str) -> None:
+    threading.Thread(
+        target=_send_admin_bid_email,
+        args=(bidder_name, watch_name),
+        daemon=True,
+        name="bid-email",
+    ).start()
+
+
+def _send_admin_bid_email(bidder_name: str, watch_name: str) -> None:
+    user = (os.environ.get("MAIL_USERNAME") or "").strip()
+    password = os.environ.get("MAIL_PASSWORD") or ""
+    if not user or not password:
+        app.logger.warning("Bid email skipped: MAIL_USERNAME or MAIL_PASSWORD is not set")
+        return
+    text = f"قام {bidder_name} بالمزايدة على ساعة {watch_name}."
+    msg = EmailMessage()
+    msg["From"] = user
+    msg["To"] = ADMIN_BID_EMAIL
+    msg["Subject"] = text
+    msg.set_content(text)
+    host = (os.environ.get("MAIL_SERVER") or "smtp.gmail.com").strip()
+    try:
+        port = int(os.environ.get("MAIL_PORT") or "587")
+    except ValueError:
+        port = 587
+    try:
+        with smtplib.SMTP(host, port, timeout=8) as smtp:
+            smtp.ehlo()
+            smtp.starttls(context=ssl.create_default_context())
+            smtp.login(user, password)
+            smtp.send_message(msg)
+    except Exception:
+        app.logger.exception("Bid email failed")
 
 
 def utcnow() -> datetime:
@@ -864,6 +904,7 @@ def place_bid(watch_id: int):
     except ValueError:
         return fail("قيمة المزايدة غير صالحة.")
 
+    watch_name = None
     with _db_lock:
         db = get_db()
         db.execute("BEGIN IMMEDIATE")
@@ -903,9 +944,13 @@ def place_bid(watch_id: int):
                 (amount, new_ends, watch_id),
             )
             db.execute("COMMIT")
+            watch_name = row["name_ar"] or ""
         except Exception:
             db.execute("ROLLBACK")
             raise
+
+    if watch_name is not None:
+        schedule_admin_bid_email(full_name, watch_name)
 
     session.permanent = True
     session["bidder_phone"] = phone
