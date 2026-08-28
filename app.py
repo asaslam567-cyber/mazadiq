@@ -112,6 +112,8 @@ def _send_admin_bid_email(bidder_name: str, watch_name: str) -> str:
         headers={
             "Authorization": f"Bearer {api_key}",
             "Content-Type": "application/json",
+            "Accept": "application/json",
+            "User-Agent": "MazadAlfadhli/1.0",
         },
     )
     try:
