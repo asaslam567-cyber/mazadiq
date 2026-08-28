@@ -36,6 +36,28 @@ from werkzeug.utils import secure_filename
 BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = Path(os.environ.get("DATA_DIR", str(BASE_DIR / "data")))
 UPLOAD_DIR = Path(os.environ.get("UPLOAD_DIR", str(BASE_DIR / "static" / "uploads")))
+
+
+def _load_dotenv_file() -> None:
+    for candidate in (BASE_DIR / ".env", DATA_DIR / ".env"):
+        if not candidate.is_file():
+            continue
+        try:
+            text = candidate.read_text(encoding="utf-8")
+        except OSError:
+            continue
+        for raw in text.splitlines():
+            line = raw.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            key, _, val = line.partition("=")
+            key = key.strip()
+            val = val.strip().strip('"').strip("'")
+            if key and key not in os.environ:
+                os.environ[key] = val
+
+
+_load_dotenv_file()
 THUMB_DIR = UPLOAD_DIR / "_thumbs"
 THUMB_PX = 160
 DB_PATH = DATA_DIR / "auction.db"
@@ -1002,11 +1024,12 @@ def place_bid(watch_id: int):
     session.modified = True
     watch = fetch_watch(get_db(), watch_id=watch_id)
     leading_bid = fetch_leading_bid(get_db(), watch_id)
+    visitor_ok = "تم إرسال مزايدتك بنجاح"
     if wants_json:
         return jsonify(
             {
                 "ok": True,
-                "message": "تم تسجيل مزايدتك بنجاح.",
+                "message": visitor_ok,
                 "current_price": watch["current_price"],
                 "min_bid": watch["min_bid"],
                 "leading_bidder_name": (leading_bid or {}).get("full_name") or full_name,
@@ -1014,12 +1037,9 @@ def place_bid(watch_id: int):
                 "is_outbid": False,
                 "auction_ends_at": watch["auction_ends_at"],
                 "extended": bool(new_ends != ends),
-                "email_ok": email_ok,
-                "email_notice": email_notice,
             }
         )
-    flash("تم تسجيل مزايدتك بنجاح. سنتواصل معك عند الحاجة.", "success")
-    flash(email_notice, "success" if email_ok else "error")
+    flash(visitor_ok, "success")
     return redirect(url_for("watch_page", slug=watch["slug"]))
 
 

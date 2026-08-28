@@ -482,18 +482,11 @@
           }
           return;
         }
-        const notice = data.email_notice || "تم تسجيل المزايدة.";
         if (emailStatus) {
           emailStatus.hidden = false;
-          emailStatus.textContent = notice;
-          emailStatus.className = data.email_ok ? "flash success" : "flash error";
+          emailStatus.textContent = "تم إرسال مزايدتك بنجاح";
+          emailStatus.className = "flash success";
         }
-        const pageFlash = document.createElement("div");
-        pageFlash.className = "flash " + (data.email_ok ? "success" : "error");
-        pageFlash.textContent = notice;
-        const main = document.querySelector("main");
-        if (main && main.parentNode) main.parentNode.insertBefore(pageFlash, main);
-        else document.body.insertBefore(pageFlash, document.body.firstChild);
         saveBidderFromForm();
         refreshPrices();
         applyLeaderBanner(document.querySelector("[data-leader-banner]"), data);
