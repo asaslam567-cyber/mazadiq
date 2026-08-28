@@ -65,6 +65,7 @@ app.config["FACEBOOK_PAGE_URL"] = os.environ.get(
     "https://www.facebook.com/mazad.mohammed.alfadhli",
 )
 app.config["PUBLIC_SITE_URL"] = os.environ.get("PUBLIC_SITE_URL", "").rstrip("/")
+app.config["PREFERRED_URL_SCHEME"] = "https" if os.environ.get("RENDER") else "http"
 
 _db_lock = threading.Lock()
 
@@ -1277,6 +1278,19 @@ def _looks_like_image(data: bytes, ext: str) -> bool:
     if ext == ".webp" and data[:4] == b"RIFF" and data[8:12] == b"WEBP":
         return True
     return False
+
+
+@app.route("/health")
+def health():
+    try:
+        DATA_DIR.mkdir(parents=True, exist_ok=True)
+        UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+        conn = sqlite3.connect(str(DB_PATH), timeout=5)
+        conn.execute("SELECT 1")
+        conn.close()
+    except (OSError, sqlite3.Error):
+        return "error", 503
+    return "ok", 200, {"Content-Type": "text/plain; charset=utf-8"}
 
 
 @app.errorhandler(404)
