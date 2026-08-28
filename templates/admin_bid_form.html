@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}تعديل مزايدة{% endblock %}
+{% block content %}
+<section class="section">
+  <div class="container" style="max-width:720px">
+    <div class="specs">
+      <h1>تعديل المزايدة</h1>
+      <p style="color:var(--green-700)">الساعة: <strong>{{ bid.watch_name }}</strong></p>
+      <form method="post" class="form-grid">
+        <label>الاسم الكامل
+          <input name="full_name" required minlength="3" value="{{ bid.full_name }}">
+        </label>
+        <label>رقم الهاتف
+          <input name="phone" required value="{{ bid.phone }}">
+        </label>
+        <label>العنوان
+          <textarea name="address" required minlength="6">{{ bid.address }}</textarea>
+        </label>
+        <label>قيمة المزايدة (بالدولار)
+          <input name="amount" type="number" step="0.01" min="0" required value="{{ '%.2f'|format(bid.amount) }}">
+        </label>
+        <div style="display:flex;gap:10px">
+          <button class="btn btn-primary" type="submit">حفظ التعديل</button>
+          <a class="btn btn-ghost" href="{{ url_for('admin_bids') }}">رجوع</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</section>
+{% endblock %}

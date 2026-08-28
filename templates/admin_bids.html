@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}سجل المزايدة{% endblock %}
+{% block content %}
+<section class="section">
+  <div class="container">
+    <div class="section-head">
+      <div>
+        <h2>سجل المزايدة</h2>
+        <p>{{ bid_count }} مزايدة · قائمة موحّدة لكل الساعات من الأحدث إلى الأقدم</p>
+      </div>
+      <a class="btn btn-ghost" href="{{ url_for('admin_dashboard') }}">رجوع للمنتجات</a>
+    </div>
+
+    {% if not bids %}
+      <p class="grid-empty">لا توجد مزايدات مسجّلة بعد.</p>
+    {% else %}
+    <div class="bid-card-list">
+      {% for b in bids %}
+      <article class="bid-card">
+        <header class="bid-card-head">
+          <a class="bid-card-watch" href="{{ url_for('watch_page', slug=b.slug) }}">{{ b.watch_name }}</a>
+          <strong>{{ b.full_name }}</strong>
+          <span class="bid-card-phone">{{ b.phone }}</span>
+        </header>
+        <div class="bid-card-body">
+          <p class="bid-card-amount">{{ '%.2f'|format(b.amount) }} $</p>
+          <p class="bid-card-address">{{ b.address or '—' }}</p>
+        </div>
+        <footer class="bid-card-foot">
+          <time datetime="{{ b.created_at }}">{{ b.created_at.replace('T', ' ').replace('Z', '') }}</time>
+            <div class="bid-card-actions">
+              {% set wa_url = whatsapp_outbid_url(b.phone, b.watch_name, b.slug) %}
+              {% if wa_url %}
+              <a class="btn btn-whatsapp" href="{{ wa_url }}" target="_blank" rel="noopener noreferrer">مراسلة واتساب</a>
+              {% endif %}
+              <a class="btn btn-ghost" href="{{ url_for('admin_edit_bid', bid_id=b.id) }}">تعديل</a>
+              <form method="post" action="{{ url_for('admin_delete_bid', bid_id=b.id) }}" onsubmit="return confirm('حذف هذه المزايدة؟ سيتم تحديث سعر الساعة تلقائياً.')">
+                <button class="btn btn-danger" type="submit">حذف</button>
+              </form>
+            </div>
+        </footer>
+      </article>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

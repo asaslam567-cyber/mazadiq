@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: mazad-alfadhli
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python serve.py
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.11"
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: PUBLIC_SITE_URL
+        sync: false

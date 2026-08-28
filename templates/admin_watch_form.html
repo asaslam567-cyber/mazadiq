@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}{{ 'تعديل ساعة' if watch else 'إضافة ساعة' }}{% endblock %}
+{% block content %}
+<section class="section">
+  <div class="container" style="max-width:720px">
+    <div class="specs">
+      <h1>{{ 'تعديل ساعة' if watch else 'إضافة ساعة جديدة' }}</h1>
+      <form method="post" enctype="multipart/form-data" class="form-grid">
+        <label>اسم الساعة
+          <input name="name_ar" required value="{{ watch.name_ar if watch else '' }}">
+        </label>
+        <label>وصف الساعة
+          <textarea name="description_ar" rows="5" placeholder="اكتب وصفاً بسيطاً للقطعة...">{{ watch.description_ar if watch else '' }}</textarea>
+        </label>
+        <label>نوع العرض
+          <select name="listing_type" id="listing_type">
+            <option value="auction" {% if watch and watch.listing_type == 'auction' %}selected{% endif %}>مزاد حي</option>
+            <option value="sale" {% if watch and watch.listing_type == 'sale' %}selected{% endif %}>بيع مباشر</option>
+          </select>
+        </label>
+        <label>سعر البداية / سعر البيع (بالدولار)
+          <input name="current_price" type="number" step="0.01" min="0" required value="{% if watch %}{{ watch.current_price }}{% else %}0{% endif %}">
+        </label>
+        <p style="margin:0;color:var(--green-700);font-weight:600">يمكن أن يكون سعر البداية صفراً (0) ليبدأ الزبائن المزايدة من أقل رفعة.</p>
+        <label>أقل رفعة للمزايدة (بالدولار)
+          <input name="bid_increment" type="number" step="0.01" min="1" required value="{% if watch %}{{ watch.bid_increment }}{% else %}5{% endif %}">
+        </label>
+        <label>مدة المزاد بالساعات (من لحظة الحفظ — مثال: 5 أو 12 أو 24)
+          <input name="auction_duration_hours" type="number" min="1" step="1" placeholder="5">
+        </label>
+        {% if watch and watch.listing_type == 'auction' and watch.is_live %}
+          <p style="margin:0;color:var(--green-700);font-weight:600">المزاد الحالي لم ينتهِ بعد. اترك الحقل فارغاً للإبقاء على وقت الانتهاء، أو أدخل ساعات جديدة لإعادة ضبط المدة من الآن.</p>
+        {% endif %}
+        <div class="image-uploader" data-image-uploader data-max="{{ max_images_per_watch }}">
+          <div class="image-uploader-head">
+            <strong>صور الساعة</strong>
+            <span data-image-count>0 / {{ max_images_per_watch }}</span>
+          </div>
+          <p class="image-uploader-hint">JPG أو PNG أو WebP — اختر عدة صور دفعة واحدة أو أضفها تباعاً. الحد الأقصى {{ max_images_per_watch }} صور.</p>
+          <div class="image-previews" data-image-previews>
+            {% if watch and watch.images %}
+              {% for filename in watch.images %}
+                {% set src = image_url(filename) %}
+                {% if src %}
+                <figure class="image-preview" data-existing-preview data-filename="{{ filename }}">
+                  <img src="{{ src }}" alt="">
+                  <button type="button" class="image-preview-remove" data-remove-existing aria-label="حذف الصورة">×</button>
+                </figure>
+                {% endif %}
+              {% endfor %}
+            {% endif %}
+          </div>
+          <label class="image-picker-btn">
+            اختيار صور
+            <input name="images" type="file" accept="image/jpeg,image/png,image/webp" multiple data-image-picker>
+          </label>
+        </div>
+        <div style="display:flex;gap:10px">
+          <button class="btn btn-primary" type="submit">حفظ</button>
+          <a class="btn btn-ghost" href="{{ url_for('admin_dashboard') }}">رجوع</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</section>
+{% endblock %}

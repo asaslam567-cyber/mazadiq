@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>{% block title %}{{ site_name }}{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@700&family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=m8">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <button type="button" class="menu-toggle" data-open-drawer aria-controls="site-drawer" aria-expanded="false" aria-label="فتح القائمة">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+      <a class="brand" href="{{ url_for('home') }}">
+        <span class="brand-mark">م</span>
+        <span class="brand-text">
+          <strong>مزاد محمد الفضلي</strong>
+          <span>للساعات الأصلية</span>
+        </span>
+      </a>
+      <nav class="top-nav" aria-label="التنقل الرئيسي">
+        <a href="{{ url_for('auctions_page') }}" class="{{ 'active' if request.endpoint == 'auctions_page' else '' }}">المزادات الحية</a>
+        <a href="{{ url_for('shop_page') }}" class="{{ 'active' if request.endpoint == 'shop_page' else '' }}">البيع المباشر</a>
+      </nav>
+    </div>
+  </header>
+
+  <div class="drawer-overlay" data-close-drawer></div>
+  <aside class="site-drawer" id="site-drawer" aria-hidden="true">
+    <div class="drawer-head">
+      <div>
+        <p class="drawer-kicker">القائمة</p>
+        <strong>مزاد محمد الفضلي</strong>
+      </div>
+      <button type="button" class="drawer-close" data-close-drawer aria-label="إغلاق القائمة">×</button>
+    </div>
+    <nav class="drawer-nav" aria-label="القائمة الجانبية">
+      <a href="{{ url_for('auctions_page') }}" class="{{ 'active' if request.endpoint == 'auctions_page' else '' }}">
+        <span class="drawer-ico" aria-hidden="true">⏱</span>
+        المزادات الحية
+      </a>
+      <a href="{{ url_for('shop_page') }}" class="{{ 'active' if request.endpoint == 'shop_page' else '' }}">
+        <span class="drawer-ico" aria-hidden="true">⌚</span>
+        البيع المباشر
+      </a>
+      {% if session.admin %}
+      <a href="{{ url_for('admin_dashboard') }}" class="{{ 'active' if request.endpoint and request.endpoint.startswith('admin_') else '' }}">
+        <span class="drawer-ico" aria-hidden="true">✦</span>
+        لوحة التحكم
+      </a>
+      {% endif %}
+      <a href="{{ facebook_url }}" target="_blank" rel="noopener noreferrer">
+        <span class="drawer-ico" aria-hidden="true">f</span>
+        مزادنا على فيسبوك
+      </a>
+      <a href="{{ url_for('about_page') }}" class="{{ 'active' if request.endpoint == 'about_page' else '' }}">
+        <span class="drawer-ico" aria-hidden="true">◈</span>
+        حول الموقع
+      </a>
+    </nav>
+  </aside>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for category, message in messages %}
+      <div class="flash {{ category }}">{{ message }}</div>
+    {% endfor %}
+  {% endwith %}
+
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <strong>مزاد محمد الفضلي للساعات الأصلية</strong>
+      <p>منصة عربية لإدارة وتجارة ساعات اليد الفاخرة والمزادات الحية. جميع القطع المعروضة أصلية وفق بيانات الإدارة.</p>
+    </div>
+  </footer>
+
+  {% include "partials/bid_modal.html" %}
+  <script src="{{ url_for('static', filename='js/app.js') }}?v=m3"></script>
+</body>
+</html>

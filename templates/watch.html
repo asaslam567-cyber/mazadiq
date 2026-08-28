@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% block title %}{{ watch.name_ar }} — {{ site_name }}{% endblock %}
+{% block content %}
+<section class="section">
+  <div class="container detail">
+    <div class="gallery" data-gallery data-images='{{ gallery_urls | tojson }}'>
+      <div class="gallery-stage">
+        {% if gallery_urls|length > 1 %}
+        <button type="button" class="gallery-nav gallery-nav-prev" data-gallery-prev aria-label="الصورة السابقة">‹</button>
+        {% endif %}
+        <button type="button" class="gallery-frame" data-gallery-open aria-label="تكبير الصورة">
+          {% if gallery_urls %}
+            <img src="{{ gallery_urls[0] }}" alt="{{ watch.name_ar }}" data-gallery-main decoding="async">
+          {% else %}
+            <div class="placeholder-img">{{ watch.name_ar }}</div>
+          {% endif %}
+        </button>
+        {% if gallery_urls|length > 1 %}
+        <button type="button" class="gallery-nav gallery-nav-next" data-gallery-next aria-label="الصورة التالية">›</button>
+        {% endif %}
+      </div>
+      {% if gallery_urls|length > 1 %}
+      <div class="gallery-dots" data-gallery-dots role="tablist" aria-label="صور الساعة"></div>
+      {% endif %}
+      {% if gallery_urls %}
+      <div class="lightbox" data-lightbox>
+        <div class="lightbox-toolbar">
+          <button type="button" class="lightbox-tool" data-lightbox-zoom aria-label="تكبير">+</button>
+          <button type="button" class="lightbox-tool" data-lightbox-close aria-label="إغلاق">×</button>
+        </div>
+        {% if gallery_urls|length > 1 %}
+        <button type="button" class="gallery-nav gallery-nav-prev lightbox-nav" data-lightbox-prev aria-label="الصورة السابقة">‹</button>
+        <button type="button" class="gallery-nav gallery-nav-next lightbox-nav" data-lightbox-next aria-label="الصورة التالية">›</button>
+        {% endif %}
+        <div class="lightbox-stage" data-lightbox-stage>
+          <img src="{{ gallery_urls[0] }}" alt="{{ watch.name_ar }}" data-lightbox-img decoding="async">
+        </div>
+      </div>
+      {% endif %}
+    </div>
+    <div class="specs">
+      <h1>{{ watch.name_ar }}</h1>
+      {% if watch.description_ar %}
+      <p class="watch-description">{{ watch.description_ar }}</p>
+      {% endif %}
+
+      {% if watch.listing_type == 'auction' %}
+      <article class="bid-info-card">
+        <div class="bid-info-head">
+          <span>{{ 'قيمة المزايدة الحالية - مباشر' if watch.is_live else 'قيمة المزايدة الحالية' }}</span>
+          <strong class="price" data-watch-price="{{ watch.id }}">{{ '%.2f'|format(watch.current_price) }} $</strong>
+        </div>
+        <div class="bid-info-foot">
+          <div>
+            <span class="bid-status-label">الحالة</span>
+            {% if watch.is_live %}
+            <strong class="bid-status-live">مباشر</strong>
+            {% else %}
+            <strong class="bid-status-closed">مغلق</strong>
+            {% endif %}
+          </div>
+          <p>الحد الأدنى التالي: <strong data-min-bid="{{ watch.id }}">{{ '%.2f'|format(watch.min_bid) }}</strong> $</p>
+        </div>
+      </article>
+
+      <div class="status-card leader-banner{% if is_outbid %} is-outbid{% endif %}" data-leader-banner="{{ watch.id }}" role="{{ 'button' if is_outbid else 'status' }}" aria-live="polite"{% if is_outbid %} tabindex="0"{% endif %}>
+        <span data-leader-text>
+          {% if is_self_leading %}
+            أنت صاحب أعلى مزايدة حالياً
+          {% elif is_outbid %}
+            قام شخص آخر بوضع مزايدة أعلى منك
+          {% elif leading_bid %}
+            صاحب أعلى مزايدة: {{ leading_bid.full_name }}
+          {% else %}
+            لا توجد مزايدات بعد
+          {% endif %}
+        </span>
+        <span class="outbid-hint" data-outbid-hint {% if not is_outbid %}hidden{% endif %}>اضغط هنا للمزايدة مرة أخرى</span>
+      </div>
+
+      {% if watch.is_ended and leading_bid %}
+      <div class="status-card winner-card">
+        <span>اسم الفائز</span>
+        <strong>{{ leading_bid.full_name }}</strong>
+      </div>
+      {% endif %}
+
+      {% if watch.is_live %}
+        <p class="countdown-label">الوقت المتبقي لانتهاء المزاد</p>
+        <div class="countdown" data-ends="{{ watch.auction_ends_at }}" data-watch-countdown="{{ watch.id }}">—</div>
+        <div class="bid-panel">
+          <button class="btn btn-primary" type="button" data-open-bid="{{ watch.id }}" data-min="{{ watch.min_bid }}" data-increment="{{ watch.bid_increment }}" data-current="{{ watch.current_price }}" data-opening="{{ '1' if watch.is_opening else '0' }}" data-live="{{ watch.id }}">وضع مزايدة</button>
+        </div>
+      {% else %}
+      <div class="status-card closed-card">
+        <strong>تم إغلاق المزاد</strong>
+        <p>انتهى الوقت المحدد لهذه الساعة ولا يمكن قبول مزايدات جديدة.</p>
+      </div>
+      {% endif %}
+      {% else %}
+      <div class="bid-info-card">
+        <div class="bid-info-head">
+          <span>سعر البيع</span>
+          <strong class="price">{{ '%.2f'|format(watch.current_price) }} $</strong>
+        </div>
+        <p>هذه القطعة معروضة للبيع المباشر بالسعر الموضح.</p>
+      </div>
+      {% endif %}
+      {% if session.admin and bids %}
+        <h3>سجل المزايدات</h3>
+        <table class="admin-table">
+          <thead><tr><th>الاسم</th><th>الهاتف</th><th>القيمة</th></tr></thead>
+          <tbody>
+            {% for b in bids %}
+            <tr><td>{{ b.full_name }}</td><td>{{ b.phone }}</td><td>{{ '%.2f'|format(b.amount) }} $</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% endif %}
+    </div>
+  </div>
+</section>
+{% endblock %}

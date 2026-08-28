@@ -1,0 +1,25 @@
+<div class="modal" id="bid-modal">
+  <div class="modal-backdrop" data-close-modal></div>
+  <div class="modal-card">
+    <h2>المزايدة</h2>
+    <div id="bid-error" class="flash error" hidden></div>
+    <form id="bid-form" method="post" class="form-grid" novalidate>
+      <label>الاسم الكامل
+        <input name="full_name" required minlength="3" autocomplete="name">
+      </label>
+      <label>رقم الهاتف
+        <input name="phone" required inputmode="tel" autocomplete="tel">
+      </label>
+      <label>العنوان
+        <input name="address" required minlength="6" autocomplete="street-address" placeholder="مثال: بغداد - المنصور">
+      </label>
+      <label>قيمة المزايدة (بالدولار)
+        <input name="amount" type="number" step="0.01" required>
+      </label>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" data-close-modal>إلغاء</button>
+        <button type="submit" class="btn btn-primary">تأكيد المزايدة</button>
+      </div>
+    </form>
+  </div>
+</div>

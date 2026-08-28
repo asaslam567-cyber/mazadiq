@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}حول الموقع — {{ site_name }}{% endblock %}
+{% block content %}
+<section class="section">
+  <div class="container about-page">
+    <div class="specs">
+      <p class="drawer-kicker">من نحن</p>
+      <h1>مزاد محمد الفضلي للساعات الأصلية</h1>
+      <p>منصة عربية فاخرة لإدارة وتجارة ساعات اليد الراقية، تجمع بين البيع المباشر والمزادات الحية بعدّاد تنازلي دقيق، مع التركيز على القطع الأصلية من دور مثل رولكس وأوميغا ولونجين.</p>
+      <div class="spec-list">
+        <div><span>التخصص</span><strong>ساعات يد أصلية فاخرة</strong></div>
+        <div><span>المزادات</span><strong>مزادات حية بتحديث لحظي للسعر</strong></div>
+        <div><span>البيع المباشر</span><strong>قطع مختارة بسعر ثابت</strong></div>
+      </div>
+      <p>نحرص على عرض التفاصيل التقنية لكل ساعة — العلامة التجارية، الحالة، نوع المكانيك، وسنة الإنتاج — مع صور عالية الجودة تساعدك على اتخاذ قرار واثق.</p>
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="{{ url_for('auctions_page') }}">المزادات الحية</a>
+        <a class="btn btn-ghost" href="{{ facebook_url }}" target="_blank" rel="noopener noreferrer">صفحتنا على فيسبوك</a>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

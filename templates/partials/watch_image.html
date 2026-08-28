@@ -1,0 +1,6 @@
+{% set src = image_url(filename) %}
+{% if src %}
+  <img src="{{ src }}" alt="{{ alt or '' }}" loading="lazy" decoding="async" {% if extra %}{{ extra|safe }}{% endif %}>
+{% else %}
+  <div class="placeholder-img">{{ fallback or 'ساعة فاخرة' }}</div>
+{% endif %}

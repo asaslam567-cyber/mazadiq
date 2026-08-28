@@ -1,0 +1,24 @@
+<a class="watch-card" href="{{ url_for('watch_page', slug=watch.slug) }}">
+  <div class="media">
+    {% set src = image_url(watch.cover) %}
+    {% if src %}
+      <img src="{{ src }}" alt="{{ watch.name_ar }}" loading="lazy" decoding="async">
+    {% else %}
+      <div class="placeholder-img">{{ watch.name_ar }}</div>
+    {% endif %}
+    {% if watch.listing_type == 'auction' %}
+      <span class="badge badge-status {{ 'badge-ended' if watch.is_ended else 'badge-active' }}" data-status-badge data-status-watch="{{ watch.id }}" data-status-ends="{{ watch.auction_ends_at }}">{{ 'انتهى المزايد' if watch.is_ended else 'متاح للمزايدة' }}</span>
+    {% else %}
+      <span class="badge">بيع مباشر</span>
+    {% endif %}
+  </div>
+  <div class="body">
+    <h3>{{ watch.name_ar }}</h3>
+    <div class="meta">
+      <span class="price" {% if watch.listing_type == 'auction' %}data-watch-price="{{ watch.id }}"{% endif %}>{{ '%.2f'|format(watch.current_price) }} $</span>
+    </div>
+    {% if watch.listing_type == 'auction' %}
+      <div class="countdown" data-ends="{{ watch.auction_ends_at }}" data-watch-countdown="{{ watch.id }}">—</div>
+    {% endif %}
+  </div>
+</a>

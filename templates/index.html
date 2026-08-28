@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}{{ site_name }}{% endblock %}
+{% block content %}
+<section class="hero">
+  <div class="container">
+    <div class="hero-card">
+      <h1>مزاد محمد الفضلي للساعات الأصلية</h1>
+      <p>منصة فاخرة لإدارة وتجارة ساعات اليد الراقية، مع مزادات حية بعدّاد تنازلي دقيق، وبيع مباشر للقطع المختارة من رولكس وأوميغا ولونجين وغيرها.</p>
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="{{ url_for('auctions_page') }}">دخول المزادات الحية</a>
+        <a class="btn btn-ghost" href="{{ url_for('shop_page') }}" style="background:transparent;color:#fff;border-color:rgba(255,255,255,.35)">تصفح البيع المباشر</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <div class="section-head">
+      <div>
+        <h2>أحدث الساعات الفاخرة</h2>
+        <p>قطع أصلية متاحة للمزاد الحي أو للشراء الفوري.</p>
+      </div>
+    </div>
+    <div class="watch-grid" data-infinite data-type="all" data-offset="{{ latest|length }}" data-total="{{ latest_total }}" data-page="{{ page_size }}">
+      {% for watch in latest %}
+        {% include "partials/watch_card.html" %}
+      {% else %}
+        <p class="grid-empty">لا توجد ساعات حالياً.</p>
+      {% endfor %}
+    </div>
+    <div class="grid-sentinel" data-infinite-sentinel {% if latest|length >= latest_total %}hidden{% endif %}></div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <div class="section-head">
+      <div>
+        <h2>المزادات الحية</h2>
+        <p>السعر الحالي يتحدّث بسلاسة، والعدّاد يعمل بالثانية.</p>
+      </div>
+      <a href="{{ url_for('auctions_page') }}">عرض الكل</a>
+    </div>
+    <div class="watch-grid" data-infinite data-type="auction" data-offset="{{ auctions|length }}" data-total="{{ auctions_total }}" data-page="{{ page_size }}">
+      {% for watch in auctions %}
+        {% include "partials/watch_card.html" %}
+      {% else %}
+        <p class="grid-empty">لا توجد مزادات حالياً.</p>
+      {% endfor %}
+    </div>
+    <div class="grid-sentinel" data-infinite-sentinel {% if auctions|length >= auctions_total %}hidden{% endif %}></div>
+  </div>
+</section>
+{% endblock %}

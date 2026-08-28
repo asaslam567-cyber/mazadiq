@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}لوحة التحكم{% endblock %}
+{% block content %}
+<section class="section">
+  <div class="container">
+    <div class="section-head">
+      <div>
+        <h2>إدارة المنتجات</h2>
+        <p>{{ watches|length }} ساعة · {{ bid_count }} مزايدة مسجّلة</p>
+      </div>
+      <div class="admin-toolbar">
+        <a class="btn btn-primary" href="{{ url_for('admin_new_watch') }}">إضافة ساعة</a>
+        <a class="btn btn-ghost" href="{{ url_for('admin_bids') }}">سجل المزايدة</a>
+        <form method="post" action="{{ url_for('admin_logout') }}"><button class="btn btn-ghost" type="submit">خروج</button></form>
+      </div>
+    </div>
+
+    {% if not watches %}
+      <p class="grid-empty">لا توجد ساعات مسجّلة بعد.</p>
+    {% else %}
+    <div class="product-card-list">
+      {% for watch in watches %}
+      {% set thumb = thumbnail_url(watch.cover) %}
+      <article class="product-card">
+        <div class="product-card-main">
+          <div class="product-card-copy">
+            <header class="product-card-head">
+              <strong>{{ watch.name_ar }}</strong>
+            </header>
+            <div class="product-card-body">
+              <p class="product-card-type">{{ 'مزاد' if watch.listing_type == 'auction' else 'بيع مباشر' }}</p>
+              <p class="product-card-price">{{ '%.2f'|format(watch.current_price) }} $</p>
+              {% if watch.listing_type == 'auction' and watch.auction_ends_at %}
+              <p class="product-card-ends">ينتهي خلال: <span class="countdown" data-ends="{{ watch.auction_ends_at }}" data-watch-countdown="{{ watch.id }}">—</span></p>
+              {% elif watch.listing_type == 'sale' %}
+              <p class="product-card-ends">بدون عدّاد انتهاء</p>
+              {% else %}
+              <p class="product-card-ends">انتهى المزاد</p>
+              {% endif %}
+            </div>
+          </div>
+          {% if thumb %}
+          <img class="product-card-thumb" src="{{ thumb }}" alt="" width="80" height="80" loading="lazy" decoding="async">
+          {% else %}
+          <div class="product-card-thumb product-card-thumb-empty" aria-hidden="true"></div>
+          {% endif %}
+        </div>
+        <footer class="product-card-foot">
+          <div class="product-card-actions">
+            <a class="btn btn-ghost" href="{{ url_for('watch_page', slug=watch.slug) }}">عرض</a>
+            <a class="btn btn-ghost" href="{{ url_for('admin_edit_watch', watch_id=watch.id) }}">تعديل</a>
+            <form method="post" action="{{ url_for('admin_delete_watch', watch_id=watch.id) }}" onsubmit="return confirm('حذف هذه الساعة؟')">
+              <button class="btn btn-danger" type="submit">حذف</button>
+            </form>
+          </div>
+        </footer>
+      </article>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

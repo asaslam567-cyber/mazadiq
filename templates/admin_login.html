@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}دخول الإدارة{% endblock %}
+{% block content %}
+<section class="section">
+  <div class="container" style="max-width:440px">
+    <div class="specs">
+      <h1>لوحة التحكم</h1>
+      <p>أدخل كلمة مرور الإدارة لإضافة الساعات وتعديل الأسعار والمزادات.</p>
+      <form method="post" class="form-grid">
+        <label>كلمة المرور
+          <input type="password" name="password" required>
+        </label>
+        <button class="btn btn-primary" type="submit">دخول</button>
+      </form>
+    </div>
+  </div>
+</section>
+{% endblock %}
