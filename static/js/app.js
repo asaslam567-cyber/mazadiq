@@ -253,6 +253,7 @@
   const modal = document.getElementById("bid-modal");
   const form = document.getElementById("bid-form");
   const errorBox = document.getElementById("bid-error");
+  const emailStatus = document.getElementById("bid-email-status");
   const BIDDER_KEY = "alfadhli_bidder";
   let lockedScrollY = 0;
 
@@ -284,6 +285,11 @@
     amount.setAttribute("data-current", current);
     amount.dataset.touched = "";
     if (errorBox) errorBox.hidden = true;
+    if (emailStatus) {
+      emailStatus.hidden = true;
+      emailStatus.textContent = "";
+      emailStatus.className = "flash";
+    }
     applySavedBidder();
     lockPageForModal();
     modal.classList.add("open");
@@ -476,8 +482,18 @@
           }
           return;
         }
-        modal.classList.remove("open");
-        unlockPageForModal();
+        const notice = data.email_notice || "تم تسجيل المزايدة.";
+        if (emailStatus) {
+          emailStatus.hidden = false;
+          emailStatus.textContent = notice;
+          emailStatus.className = data.email_ok ? "flash success" : "flash error";
+        }
+        const pageFlash = document.createElement("div");
+        pageFlash.className = "flash " + (data.email_ok ? "success" : "error");
+        pageFlash.textContent = notice;
+        const main = document.querySelector("main");
+        if (main && main.parentNode) main.parentNode.insertBefore(pageFlash, main);
+        else document.body.insertBefore(pageFlash, document.body.firstChild);
         saveBidderFromForm();
         refreshPrices();
         applyLeaderBanner(document.querySelector("[data-leader-banner]"), data);

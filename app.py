@@ -976,18 +976,24 @@ def place_bid(watch_id: int):
             db.execute("ROLLBACK")
             raise
 
+    email_ok = False
     if watch_name is None:
+        email_notice = "لم يُرسل إيميل الإشعار لأن المزايدة لم تُحفظ."
         _bid_email_trace(f"skip send: bid did not commit watch_id={watch_id}")
     else:
         try:
             send_error = _send_admin_bid_email(full_name, watch_name)
-            if send_error:
-                _bid_email_trace(f"send returned error={send_error!r}")
-            else:
-                _bid_email_trace("send returned success")
         except Exception as err:
-            _bid_email_trace(f"send raised {type(err).__name__}: {err}")
+            send_error = f"{type(err).__name__}: {err}"
+            _bid_email_trace(f"send raised {send_error}")
             app.logger.exception("Bid email failed")
+        if send_error:
+            email_notice = f"المزايدة سُجّلت، لكن إيميل الإشعار فشل: {send_error}"
+            _bid_email_trace(f"send returned error={send_error!r}")
+        else:
+            email_ok = True
+            email_notice = "المزايدة سُجّلت، وتم إرسال إيميل الإشعار إلى as.aslam567@gmail.com."
+            _bid_email_trace("send returned success")
 
     session.permanent = True
     session["bidder_phone"] = phone
@@ -1006,9 +1012,12 @@ def place_bid(watch_id: int):
                 "is_outbid": False,
                 "auction_ends_at": watch["auction_ends_at"],
                 "extended": bool(new_ends != ends),
+                "email_ok": email_ok,
+                "email_notice": email_notice,
             }
         )
     flash("تم تسجيل مزايدتك بنجاح. سنتواصل معك عند الحاجة.", "success")
+    flash(email_notice, "success" if email_ok else "error")
     return redirect(url_for("watch_page", slug=watch["slug"]))
 
 
