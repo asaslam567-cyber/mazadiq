@@ -83,19 +83,25 @@ def schedule_admin_bid_email(bidder_name: str, watch_name: str) -> None:
     ).start()
 
 
-def _send_admin_bid_email(bidder_name: str, watch_name: str) -> None:
-    api_key = (os.environ.get("RESEND_API_KEY") or "").strip()
+def _resend_api_key() -> str:
+    raw = (os.environ.get("RESEND_API_KEY") or os.environ.get("RESEND_APIKEY") or "").strip()
+    return raw.strip('"').strip("'")
+
+
+def _send_admin_bid_email(bidder_name: str, watch_name: str) -> str:
+    api_key = _resend_api_key()
     if not api_key:
         app.logger.warning("Bid email skipped: RESEND_API_KEY is not set")
-        return
+        return "لم يُعثر على المفتاح. اسم المتغير يجب أن يكون RESEND_API_KEY تماماً."
     text = f"قام {bidder_name} بالمزايدة على ساعة {watch_name}."
     payload = json.dumps(
         {
-            "from": "مزاد محمد الفضلي <beth.t@example.com>",
+            "from": "Mazad Alfadhli <beth.t@example.com>",
             "to": [ADMIN_BID_EMAIL],
             "subject": text,
             "text": text,
-        }
+        },
+        ensure_ascii=False,
     ).encode("utf-8")
     req = urllib.request.Request(
         "https://api.resend.com/emails",
@@ -109,8 +115,18 @@ def _send_admin_bid_email(bidder_name: str, watch_name: str) -> None:
     try:
         with urllib.request.urlopen(req, timeout=8) as resp:
             resp.read()
-    except (urllib.error.URLError, TimeoutError, OSError):
+        return ""
+    except urllib.error.HTTPError as err:
+        detail = err.read().decode("utf-8", errors="replace")
+        app.logger.error("Bid email failed: %s %s", err.code, detail)
+        try:
+            message = json.loads(detail).get("message") or detail
+        except json.JSONDecodeError:
+            message = detail or str(err.code)
+        return str(message)
+    except (urllib.error.URLError, TimeoutError, OSError) as err:
         app.logger.exception("Bid email failed")
+        return str(err)
 
 
 def utcnow() -> datetime:
@@ -1005,6 +1021,17 @@ def admin_dashboard():
     watches = fetch_watches(db)
     bid_count = db.execute("SELECT COUNT(*) AS c FROM bids").fetchone()["c"]
     return render_template("admin.html", watches=watches, bid_count=bid_count)
+
+
+@app.post("/admin/test-email")
+@login_required
+def admin_test_email():
+    error = _send_admin_bid_email("تجربة", "اختبار الإشعار")
+    if error:
+        flash(f"لم يُرسل الإيميل: {error}", "error")
+    else:
+        flash("تم إرسال إيميل التجربة إلى as.aslam567@gmail.com. تحقق من الوارد والرسائل غير المرغوب فيها.", "success")
+    return redirect(url_for("admin_dashboard"))
 
 
 def fetch_bid_history(db) -> list[dict]:
