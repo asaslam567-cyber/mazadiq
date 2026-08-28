@@ -69,7 +69,6 @@ app.config["FACEBOOK_PAGE_URL"] = os.environ.get(
 )
 app.config["PUBLIC_SITE_URL"] = os.environ.get("PUBLIC_SITE_URL", "").rstrip("/")
 app.config["PREFERRED_URL_SCHEME"] = "https" if os.environ.get("RENDER") else "http"
-ADMIN_BID_EMAIL = (os.environ.get("ADMIN_BID_EMAIL") or "as.aslam567@gmail.com").strip()
 
 _db_lock = threading.Lock()
 
@@ -87,8 +86,8 @@ def _send_admin_bid_email(bidder_name: str, watch_name: str) -> str:
     text = f"قام {bidder_name} بالمزايدة على ساعة {watch_name}."
     payload = json.dumps(
         {
-            "from": "Mazad Alfadhli <beth.t@example.com>",
-            "to": [ADMIN_BID_EMAIL],
+            "from": "onboarding@resend.dev",
+            "to": ["as.aslam567@gmail.com"],
             "subject": text,
             "text": text,
         },
