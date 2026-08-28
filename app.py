@@ -4,14 +4,14 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import os
 import re
-import smtplib
 import sqlite3
-import ssl
 import threading
 import uuid
-from email.message import EmailMessage
+import urllib.error
+import urllib.request
 from datetime import datetime, timedelta, timezone
 from functools import wraps
 from pathlib import Path
@@ -84,29 +84,32 @@ def schedule_admin_bid_email(bidder_name: str, watch_name: str) -> None:
 
 
 def _send_admin_bid_email(bidder_name: str, watch_name: str) -> None:
-    user = (os.environ.get("MAIL_USERNAME") or "").strip()
-    password = os.environ.get("MAIL_PASSWORD") or ""
-    if not user or not password:
-        app.logger.warning("Bid email skipped: MAIL_USERNAME or MAIL_PASSWORD is not set")
+    api_key = (os.environ.get("RESEND_API_KEY") or "").strip()
+    if not api_key:
+        app.logger.warning("Bid email skipped: RESEND_API_KEY is not set")
         return
     text = f"قام {bidder_name} بالمزايدة على ساعة {watch_name}."
-    msg = EmailMessage()
-    msg["From"] = user
-    msg["To"] = ADMIN_BID_EMAIL
-    msg["Subject"] = text
-    msg.set_content(text)
-    host = (os.environ.get("MAIL_SERVER") or "smtp.gmail.com").strip()
+    payload = json.dumps(
+        {
+            "from": "مزاد محمد الفضلي <beth.t@example.com>",
+            "to": [ADMIN_BID_EMAIL],
+            "subject": text,
+            "text": text,
+        }
+    ).encode("utf-8")
+    req = urllib.request.Request(
+        "https://api.resend.com/emails",
+        data=payload,
+        method="POST",
+        headers={
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+        },
+    )
     try:
-        port = int(os.environ.get("MAIL_PORT") or "587")
-    except ValueError:
-        port = 587
-    try:
-        with smtplib.SMTP(host, port, timeout=8) as smtp:
-            smtp.ehlo()
-            smtp.starttls(context=ssl.create_default_context())
-            smtp.login(user, password)
-            smtp.send_message(msg)
-    except Exception:
+        with urllib.request.urlopen(req, timeout=8) as resp:
+            resp.read()
+    except (urllib.error.URLError, TimeoutError, OSError):
         app.logger.exception("Bid email failed")
 
 
