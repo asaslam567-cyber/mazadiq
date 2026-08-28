@@ -59,7 +59,7 @@ app = Flask(__name__)
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "alfadhli-luxury-watches-2026")
 app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(days=30)
 app.config["MAX_CONTENT_LENGTH"] = 50 * 1024 * 1024
-app.config["ADMIN_PASSWORD"] = os.environ.get("ADMIN_PASSWORD", "aslam12345")
+app.config["ADMIN_PASSWORD"] = (os.environ.get("ADMIN_PASSWORD") or "").strip() or "aslam12345"
 app.config["FACEBOOK_PAGE_URL"] = os.environ.get(
     "FACEBOOK_PAGE_URL",
     "https://www.facebook.com/mazad.mohammed.alfadhli",
@@ -935,7 +935,7 @@ def admin_login():
     if session.get("admin"):
         return redirect(url_for("admin_dashboard"))
     if request.method == "POST":
-        password = request.form.get("password") or ""
+        password = (request.form.get("password") or "").strip()
         if password == app.config["ADMIN_PASSWORD"]:
             session["admin"] = True
             session.permanent = True
