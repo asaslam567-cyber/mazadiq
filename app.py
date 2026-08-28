@@ -74,15 +74,6 @@ ADMIN_BID_EMAIL = (os.environ.get("ADMIN_BID_EMAIL") or "as.aslam567@gmail.com")
 _db_lock = threading.Lock()
 
 
-def schedule_admin_bid_email(bidder_name: str, watch_name: str) -> None:
-    threading.Thread(
-        target=_send_admin_bid_email,
-        args=(bidder_name, watch_name),
-        daemon=True,
-        name="bid-email",
-    ).start()
-
-
 def _resend_api_key() -> str:
     raw = (os.environ.get("RESEND_API_KEY") or os.environ.get("RESEND_APIKEY") or "").strip()
     return raw.strip('"').strip("'")
@@ -969,7 +960,10 @@ def place_bid(watch_id: int):
             raise
 
     if watch_name is not None:
-        schedule_admin_bid_email(full_name, watch_name)
+        try:
+            _send_admin_bid_email(full_name, watch_name)
+        except Exception:
+            app.logger.exception("Bid email failed")
 
     session.permanent = True
     session["bidder_phone"] = phone
