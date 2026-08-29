@@ -689,7 +689,11 @@
       const closer = lightbox.querySelector("[data-lightbox-close]");
       if (closer) closer.addEventListener("click", closeLightbox);
       lightbox.addEventListener("click", function (e) {
-        if (e.target === lightbox) closeLightbox();
+        if (e.target.closest("[data-lightbox-close], [data-lightbox-zoom], [data-lightbox-prev], [data-lightbox-next]")) {
+          return;
+        }
+        if (e.target === lightImg) return;
+        closeLightbox();
       });
       const zoomBtn = lightbox.querySelector("[data-lightbox-zoom]");
       if (zoomBtn) {
@@ -791,7 +795,11 @@
 
     document.addEventListener("keydown", function (e) {
       if (!document.body.classList.contains("lightbox-open")) return;
-      if (e.key === "Escape") closeLightbox();
+      if (e.key === "Escape") {
+        e.preventDefault();
+        closeLightbox();
+        return;
+      }
       if (e.key === "ArrowRight") setIndex(index - 1);
       if (e.key === "ArrowLeft") setIndex(index + 1);
     });
