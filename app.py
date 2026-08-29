@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import hashlib
+import io
 import json
 import os
 import re
@@ -76,6 +77,8 @@ UPLOAD_MIME = {
 }
 MAX_IMAGE_BYTES = 8 * 1024 * 1024
 MAX_IMAGES_PER_WATCH = 6
+DISPLAY_IMAGE_MAX_PX = 1600
+DISPLAY_IMAGE_MAX_BYTES = 400 * 1024
 MIN_BID_INCREMENT = 5.0
 WATCH_PAGE_SIZE = 4
 SNIPE_WINDOW_SECONDS = 180
@@ -1388,10 +1391,52 @@ def store_image(file_storage) -> str:
         raise ValueError("ملف الصورة تالف أو فارغ.")
     if not _looks_like_image(data, ext):
         raise ValueError("تعذر التحقق من نوع الصورة. ارفع ملفاً أصلياً صالحاً.")
-    new_name = f"{uuid.uuid4().hex}{ext}"
+    data = _compress_display_image(data)
+    new_name = f"{uuid.uuid4().hex}.jpg"
     dest = UPLOAD_DIR / new_name
     dest.write_bytes(data)
     return new_name
+
+
+def _image_to_rgb(img):
+    from PIL import Image, ImageOps
+
+    img = ImageOps.exif_transpose(img)
+    if img.mode in ("RGBA", "LA") or (img.mode == "P" and "transparency" in img.info):
+        rgba = img.convert("RGBA")
+        bg = Image.new("RGB", rgba.size, (255, 255, 255))
+        bg.paste(rgba, mask=rgba.split()[-1])
+        return bg
+    return img.convert("RGB")
+
+
+def _jpeg_bytes(img, quality: int) -> bytes:
+    buf = io.BytesIO()
+    img.save(buf, format="JPEG", quality=quality, optimize=True, progressive=True)
+    return buf.getvalue()
+
+
+def _compress_display_image(data: bytes) -> bytes:
+    from PIL import Image, UnidentifiedImageError
+
+    try:
+        img = Image.open(io.BytesIO(data))
+        img.load()
+    except (UnidentifiedImageError, OSError) as err:
+        raise ValueError("تعذر قراءة الصورة. ارفع ملفاً أصلياً صالحاً.") from err
+    img = _image_to_rgb(img)
+    img.thumbnail((DISPLAY_IMAGE_MAX_PX, DISPLAY_IMAGE_MAX_PX), Image.Resampling.LANCZOS)
+    qualities = (86, 82, 78, 74)
+    widths = (DISPLAY_IMAGE_MAX_PX, 1400, 1200)
+    best = b""
+    for max_side in widths:
+        work = img.copy()
+        work.thumbnail((max_side, max_side), Image.Resampling.LANCZOS)
+        for quality in qualities:
+            best = _jpeg_bytes(work, quality)
+            if len(best) <= DISPLAY_IMAGE_MAX_BYTES:
+                return best
+    return best
 
 
 def _looks_like_image(data: bytes, ext: str) -> bool:
