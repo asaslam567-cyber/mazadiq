@@ -10,6 +10,7 @@ import os
 import re
 import sqlite3
 import sys
+import tempfile
 import threading
 import uuid
 import urllib.error
@@ -1150,6 +1151,44 @@ def admin_dashboard():
     watches = fetch_watches(db)
     bid_count = db.execute("SELECT COUNT(*) AS c FROM bids").fetchone()["c"]
     return render_template("admin.html", watches=watches, bid_count=bid_count)
+
+
+@app.get("/admin/backup")
+@login_required
+def admin_download_backup():
+    if not DB_PATH.is_file():
+        flash("لا توجد قاعدة بيانات لتحميلها بعد.", "error")
+        return redirect(url_for("admin_dashboard"))
+    stamp = utcnow().strftime("%Y%m%d-%H%M%S")
+    fd, tmp_path = tempfile.mkstemp(prefix="mazad-backup-", suffix=".db")
+    os.close(fd)
+    try:
+        src = sqlite3.connect(f"file:{DB_PATH}?mode=ro", uri=True, timeout=15)
+        try:
+            dst = sqlite3.connect(tmp_path)
+            try:
+                src.backup(dst)
+            finally:
+                dst.close()
+        finally:
+            src.close()
+        payload = Path(tmp_path).read_bytes()
+    except sqlite3.Error:
+        flash("تعذر تجهيز النسخة الاحتياطية. حاول مرة أخرى.", "error")
+        return redirect(url_for("admin_dashboard"))
+    finally:
+        try:
+            os.unlink(tmp_path)
+        except OSError:
+            pass
+    buf = io.BytesIO(payload)
+    buf.seek(0)
+    return send_file(
+        buf,
+        as_attachment=True,
+        download_name=f"mazad-backup-{stamp}.db",
+        mimetype="application/octet-stream",
+    )
 
 
 @app.post("/admin/test-email")

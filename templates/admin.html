@@ -10,6 +10,7 @@
       </div>
       <div class="admin-toolbar">
         <a class="btn btn-primary" href="{{ url_for('admin_new_watch') }}">إضافة ساعة</a>
+        <a class="btn btn-ghost" href="{{ url_for('admin_download_backup') }}">تحميل نسخة احتياطية</a>
         <a class="btn btn-ghost" href="{{ url_for('admin_bids') }}">سجل المزايدة</a>
         <form method="post" action="{{ url_for('admin_test_email') }}">
           <button class="btn btn-ghost" type="submit">تجربة إيميل الإشعار</button>
