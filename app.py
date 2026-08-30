@@ -96,6 +96,72 @@ app.config["FACEBOOK_PAGE_URL"] = os.environ.get(
 app.config["PUBLIC_SITE_URL"] = os.environ.get("PUBLIC_SITE_URL", "").rstrip("/")
 app.config["PREFERRED_URL_SCHEME"] = "https" if os.environ.get("RENDER") else "http"
 
+
+def _r2_settings() -> dict | None:
+    account = (
+        os.environ.get("R2_ACCOUNT_ID")
+        or os.environ.get("CLOUDFLARE_ACCOUNT_ID")
+        or ""
+    ).strip()
+    key = (os.environ.get("R2_ACCESS_KEY_ID") or "").strip()
+    secret = (os.environ.get("R2_SECRET_ACCESS_KEY") or "").strip()
+    bucket = (
+        os.environ.get("R2_BUCKET")
+        or os.environ.get("R2_BUCKET_NAME")
+        or ""
+    ).strip()
+    public = (os.environ.get("R2_PUBLIC_BASE_URL") or "").strip().rstrip("/")
+    if account and key and secret and bucket and public:
+        return {
+            "account": account,
+            "key": key,
+            "secret": secret,
+            "bucket": bucket,
+            "public": public,
+        }
+    return None
+
+
+def _r2_client(settings: dict):
+    import boto3
+    from botocore.config import Config
+
+    return boto3.client(
+        "s3",
+        endpoint_url=f"https://{settings['account']}.r2.cloudflarestorage.com",
+        aws_access_key_id=settings["key"],
+        aws_secret_access_key=settings["secret"],
+        region_name="auto",
+        config=Config(signature_version="s3v4"),
+    )
+
+
+def _r2_put(filename: str, data: bytes) -> None:
+    settings = _r2_settings()
+    if not settings:
+        return
+    try:
+        _r2_client(settings).put_object(
+            Bucket=settings["bucket"],
+            Key=filename,
+            Body=data,
+            ContentType="image/jpeg",
+            CacheControl="public, max-age=31536000, immutable",
+        )
+    except Exception as err:
+        app.logger.exception("R2 upload failed")
+        raise ValueError("تعذر رفع الصورة إلى التخزين السحابي. تحقق من إعدادات R2.") from err
+
+
+def _r2_delete(filename: str) -> None:
+    settings = _r2_settings()
+    if not settings:
+        return
+    try:
+        _r2_client(settings).delete_object(Bucket=settings["bucket"], Key=filename)
+    except Exception:
+        app.logger.exception("R2 delete failed for %s", filename)
+
 _db_lock = threading.Lock()
 
 
@@ -657,13 +723,21 @@ def image_url(filename: str | None) -> str:
     path = UPLOAD_DIR / filename
     if path.exists() and path.resolve().is_relative_to(UPLOAD_DIR.resolve()):
         return url_for("serve_upload", filename=filename)
+    settings = _r2_settings()
+    if settings:
+        return f"{settings['public']}/{filename}"
     return ""
 
 
 def thumbnail_url(filename: str | None) -> str:
-    if not filename or not image_url(filename):
+    if not filename:
         return ""
-    return url_for("serve_thumb", filename=filename)
+    if _safe_upload_file(filename):
+        return url_for("serve_thumb", filename=filename)
+    settings = _r2_settings()
+    if settings:
+        return f"{settings['public']}/{Path(filename).stem}_t.jpg"
+    return ""
 
 
 def _safe_upload_file(filename: str) -> Path | None:
@@ -701,6 +775,9 @@ def delete_image_file(filename: str) -> None:
     thumb = THUMB_DIR / f"{Path(filename).stem}.jpg"
     if thumb.exists():
         thumb.unlink()
+    stem = Path(filename).stem
+    _r2_delete(filename)
+    _r2_delete(f"{stem}_t.jpg")
 
 
 @app.context_processor
@@ -1393,9 +1470,28 @@ def store_image(file_storage) -> str:
         raise ValueError("تعذر التحقق من نوع الصورة. ارفع ملفاً أصلياً صالحاً.")
     data = _compress_display_image(data)
     new_name = f"{uuid.uuid4().hex}.jpg"
+    thumb_name = f"{Path(new_name).stem}_t.jpg"
+    thumb_data = _make_thumbnail_jpeg(data)
+    if _r2_settings():
+        _r2_put(new_name, data)
+        try:
+            _r2_put(thumb_name, thumb_data)
+        except Exception:
+            _r2_delete(new_name)
+            raise
+        return new_name
     dest = UPLOAD_DIR / new_name
     dest.write_bytes(data)
     return new_name
+
+
+def _make_thumbnail_jpeg(data: bytes) -> bytes:
+    from PIL import Image
+
+    img = Image.open(io.BytesIO(data))
+    img = _image_to_rgb(img)
+    img.thumbnail((THUMB_PX, THUMB_PX), Image.Resampling.LANCZOS)
+    return _jpeg_bytes(img, 72)
 
 
 def _image_to_rgb(img):

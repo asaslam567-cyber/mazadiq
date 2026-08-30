@@ -18,3 +18,15 @@ services:
         sync: false
       - key: UPLOAD_DIR
         sync: false
+      - key: R2_ACCOUNT_ID
+        sync: false
+      - key: CLOUDFLARE_ACCOUNT_ID
+        sync: false
+      - key: R2_ACCESS_KEY_ID
+        sync: false
+      - key: R2_SECRET_ACCESS_KEY
+        sync: false
+      - key: R2_BUCKET
+        sync: false
+      - key: R2_PUBLIC_BASE_URL
+        sync: false

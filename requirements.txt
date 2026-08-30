@@ -2,4 +2,5 @@ Pillow==10.4.0
 Flask==3.0.3
 Werkzeug==3.0.6
 waitress==3.0.2
+boto3==1.35.36
 
