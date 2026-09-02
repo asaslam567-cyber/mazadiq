@@ -784,7 +784,7 @@ def delete_image_file(filename: str) -> None:
 @app.context_processor
 def inject_globals():
     return {
-        "site_name": "مزاد محمد الفضلي للساعات الأصلية",
+        "site_name": "مزاد محمد الفضلي أكبر مزاد للساعات الأصلية في العراق",
         "min_increment": MIN_BID_INCREMENT,
         "now_iso": iso(utcnow()),
         "image_url": image_url,
