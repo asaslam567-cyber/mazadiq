@@ -595,7 +595,7 @@ def whatsapp_outbid_url(phone: str, watch_name: str, slug: str) -> str:
     watch_url = public_watch_url(slug)
     text = (
         "مرحباً بك، لقد تم وضع مزايدة أعلى من مزايدتك على ساعة "
-        f"{watch_name} في مزاد محمد الفضلي للساعات الأصلية. "
+        f"{watch_name} في مزاد محمد الفضلي أكبر مزاد للساعات الأصلية في العراق. "
         "إذا كنت تود رفع السعر، اضغط على الرابط أدناه.\n"
         f"{watch_url}"
     )
