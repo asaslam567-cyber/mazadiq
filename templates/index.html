@@ -1,11 +1,11 @@
 {% extends "base.html" %}
-{% block title %}مزاد محمد الفضلي - أكبر مزاد للساعات الأصلية في العراق{% endblock %}
+{% block title %}{{ site_name }}{% endblock %}
 {% block meta_description %}أكبر مزاد للساعات الأصلية في العراق: مزادات حية بعدّاد واضح، وبيع مباشر لقطع مختارة من العلامات الفاخرة.{% endblock %}
 {% block content %}
 <section class="hero">
   <div class="container">
     <div class="hero-card">
-      <h1>مزاد محمد الفضلي للساعات الأصلية</h1>
+      <h1>{{ site_name }}</h1>
       <p>منصة فاخرة لإدارة وتجارة ساعات اليد الراقية، مع مزادات حية بعدّاد تنازلي دقيق، وبيع مباشر للقطع المختارة من رولكس وأوميغا ولونجين وغيرها.</p>
       <div class="hero-actions">
         <a class="btn btn-primary" href="{{ url_for('auctions_page') }}">دخول المزادات الحية</a>
