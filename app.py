@@ -1598,6 +1598,16 @@ def _looks_like_image(data: bytes, ext: str) -> bool:
     return False
 
 
+@app.route("/google9d19506379e2af07.html")
+def google_site_verification():
+    # Google Search Console HTML-file ownership verification.
+    return (
+        "google-site-verification: google9d19506379e2af07.html\n",
+        200,
+        {"Content-Type": "text/html; charset=utf-8"},
+    )
+
+
 @app.route("/robots.txt")
 def robots_txt():
     base = public_base_url()
