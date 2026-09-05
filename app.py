@@ -785,6 +785,11 @@ def public_base_url() -> str:
     base = (app.config.get("PUBLIC_SITE_URL") or "").rstrip("/")
     if base:
         return base
+    host = (request.host or "").strip()
+    if host:
+        # Render terminates TLS at the proxy; prefer https for SEO URLs.
+        if os.environ.get("RENDER") or (request.headers.get("X-Forwarded-Proto") or "").lower() == "https":
+            return f"https://{host}"
     return (request.url_root or "").rstrip("/")
 
 
