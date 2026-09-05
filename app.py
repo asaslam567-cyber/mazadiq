@@ -781,6 +781,13 @@ def delete_image_file(filename: str) -> None:
     _r2_delete(f"{stem}_t.jpg")
 
 
+def public_base_url() -> str:
+    base = (app.config.get("PUBLIC_SITE_URL") or "").rstrip("/")
+    if base:
+        return base
+    return (request.url_root or "").rstrip("/")
+
+
 @app.context_processor
 def inject_globals():
     return {
@@ -792,6 +799,8 @@ def inject_globals():
         "facebook_url": app.config["FACEBOOK_PAGE_URL"],
         "max_images_per_watch": MAX_IMAGES_PER_WATCH,
         "whatsapp_outbid_url": whatsapp_outbid_url,
+        "public_base_url": public_base_url(),
+        "canonical_url": public_base_url() + request.path,
     }
 
 
@@ -1582,6 +1591,48 @@ def _looks_like_image(data: bytes, ext: str) -> bool:
     if ext == ".webp" and data[:4] == b"RIFF" and data[8:12] == b"WEBP":
         return True
     return False
+
+
+@app.route("/robots.txt")
+def robots_txt():
+    base = public_base_url()
+    body = (
+        "User-agent: *\n"
+        "Allow: /\n"
+        "Disallow: /admin\n"
+        "Disallow: /api/\n"
+        f"Sitemap: {base}/sitemap.xml\n"
+    )
+    return body, 200, {"Content-Type": "text/plain; charset=utf-8"}
+
+
+@app.route("/sitemap.xml")
+def sitemap_xml():
+    base = public_base_url()
+    urls = [
+        ("/", "1.0", "daily"),
+        ("/auctions", "0.9", "hourly"),
+        ("/shop", "0.8", "daily"),
+        ("/about", "0.7", "weekly"),
+    ]
+    db = get_db()
+    for watch in fetch_watches(db):
+        slug = watch.get("slug")
+        if slug:
+            urls.append((f"/watch/{slug}", "0.6", "daily"))
+
+    parts = [
+        '<?xml version="1.0" encoding="UTF-8"?>',
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+    ]
+    for path, priority, changefreq in urls:
+        parts.append("  <url>")
+        parts.append(f"    <loc>{base}{path}</loc>")
+        parts.append(f"    <changefreq>{changefreq}</changefreq>")
+        parts.append(f"    <priority>{priority}</priority>")
+        parts.append("  </url>")
+    parts.append("</urlset>")
+    return "\n".join(parts), 200, {"Content-Type": "application/xml; charset=utf-8"}
 
 
 @app.route("/health")

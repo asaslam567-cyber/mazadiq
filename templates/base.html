@@ -4,8 +4,29 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>{% block title %}{{ site_name }}{% endblock %}</title>
-  <meta name="description" content="{% block meta_description %}مزاد محمد الفضلي أكبر مزاد للساعات الأصلية في العراق: مزادات حية وبيع مباشر لساعات يد أصلية.{% endblock %}">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <meta name="description" content="{% block meta_description %}مزاد محمد الفضلي — أكبر مزاد ساعات أصلية في العراق. مزادات حية وبيع مباشر لساعات يد فاخرة.{% endblock %}">
+  <link rel="canonical" href="{% block canonical %}{{ canonical_url }}{% endblock %}">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="ar_IQ">
+  <meta property="og:site_name" content="مزاد محمد الفضلي">
+  <meta property="og:title" content="{% block og_title %}{{ self.title() }}{% endblock %}">
+  <meta property="og:description" content="{% block og_description %}{{ self.meta_description() }}{% endblock %}">
+  <meta property="og:url" content="{{ self.canonical() }}">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="{{ self.og_title() }}">
+  <meta name="twitter:description" content="{{ self.og_description() }}">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "مزاد محمد الفضلي",
+    "alternateName": "أكبر مزاد ساعات أصلية في العراق",
+    "url": "{{ public_base_url }}/",
+    "description": "أكبر مزاد ساعات أصلية في العراق — مزادات حية وبيع مباشر.",
+    "areaServed": "IQ",
+    "sameAs": ["{{ facebook_url }}"]
+  }
+  </script>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@700&family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=m9">
@@ -79,7 +100,7 @@
 
   <footer class="site-footer">
     <div class="container">
-      <strong>{{ site_name }}</strong>
+      <strong>مزاد محمد الفضلي — أكبر مزاد ساعات في العراق</strong>
       <p>منصة عربية لإدارة وتجارة ساعات اليد الفاخرة والمزادات الحية. جميع القطع المعروضة أصلية وفق بيانات الإدارة.</p>
     </div>
   </footer>
